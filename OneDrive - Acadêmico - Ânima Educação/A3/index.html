@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+    <head>
+        <meta charset="UTF-8">
+        <title>TEste</title>
+        <style>
+            .container-fundo {
+                position: relative;
+                width: 100%;
+                max-width: 2048px;
+                margin: 0 auto;
+            }
+
+            .container-fundo img {
+                width: 100%;
+                height: auto;
+                display: block;
+            }
+
+            .botao-sobreposto {
+                position: absolute;
+                padding: 5px 5px;
+                background-color: transparent blue;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                cursor: pointer;
+                color: black;
+            }
+
+            .botao-1 {
+                top: 400px;
+                left: 24%;
+            }
+
+            .botao-2 {
+                top: 25%;
+                left: 34%;
+                background-color: red;
+            }
+
+            .botao-3 {
+                top: 15%;
+                left: 34%;
+                background-color: green;                
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container-fundo">
+            <img src="Mapa B Country.jpeg" alt="Mapa do estacionamento do shopping Bourbon Country">
+
+            <button class="botao-sobreposto botao-1">Equipe 1</button>
+            <button class="botao-sobreposto botao-2">Equipe 2</button>
+            <button class="botao-sobreposto botao-3">Equipe 3</button>
+        </div>
+    </body>
+</html>
