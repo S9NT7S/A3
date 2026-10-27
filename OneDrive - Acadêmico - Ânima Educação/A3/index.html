@@ -1,8 +1,14 @@
+<!-- 
+    Modal para abrir os botões
+    Menu hamburguer
+    Botão para abrir o botão hamburguer
+    
+-->
 <!DOCTYPE html>
 <html lang="pt-BR">
     <head>
         <meta charset="UTF-8">
-        <title>TEste</title>
+        <title>Teste</title>
         <style>
             .container-fundo {
                 position: relative;
@@ -19,7 +25,7 @@
 
             .botao-sobreposto {
                 position: absolute;
-                padding: 5px 5px;
+                padding: 10px 10px;
                 background-color: transparent blue;
                 color: white;
                 border: none;
@@ -29,30 +35,127 @@
             }
 
             .botao-1 {
-                top: 400px;
+                top: 150px;
                 left: 24%;
-            }
-
-            .botao-2 {
-                top: 25%;
-                left: 34%;
                 background-color: red;
+                width: 250px;
+                height: 150px;
             }
 
-            .botao-3 {
-                top: 15%;
-                left: 34%;
-                background-color: green;                
+            .dropdown {
+                position: relative;
+                display: inline-block;
+                font-family: Arial, Helvetica, sans-serif;
+            }
+
+            .dropdown-btn {
+                background-color: slateblue;
+                color: white;
+                padding: 12px 20px;
+                font-size: 16px;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                transition: 0.2s;
+            }
+
+            .dropdown-btn:hover{
+                background-color: teal;
+            }
+
+            .arrow {
+                border: solid white;
+                border-width: 0 2px 2px 0;
+                display: inline-block;
+                padding: 3px;
+                transform: rotate(45deg);
+                transition: transform 0.2s;
+            }
+
+            .dropdown.active .arrow {
+                transform: rotate(-135deg);
+                margin-top: 4px;
+            }
+
+            .dropdown-menu {
+                display: none;
+                position: absolute;
+                background-color: white;
+                min-width: 160px;
+                box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.15);
+                border-radius: 4px;
+                margin-top: 4px;
+                z-index: 1;
+                overflow: hidden;
+            }
+
+            .dropdown-menu a {
+            color: #333;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+            transition: 0.2s;
+        }
+
+            .dropdown.active .dropdown-menu {
+                display: block;
             }
         </style>
     </head>
     <body>
+        <div class="dropdown" id="meuDropdown">
+            <button class="dropdown-btn">
+                Equipes <i class="arrow"></i>
+            </button>
+            <div class="dropdown-menu">
+                <a href="#teste">Equipe 1</a>
+                <a href="#teste">Equipe 2</a>
+                <a href="#teste">Equipe 3</a>
+                <a href="#teste">Equipe 4</a>
+                <a href="#teste">Equipe 5</a>
+                <a href="#teste">Equipe 6</a>
+                <a href="#teste">Equipe 7</a>
+                <a href="#teste">Equipe 8</a>
+                <a href="#teste">Equipe 9</a>
+                <a href="#teste">Equipe 10</a>
+                <a href="#teste">Equipe 11</a>
+                <a href="#teste">Equipe 12</a>
+                <a href="#teste">Equipe 13</a>
+            </div>
+        </div>
+
+        <script>
+            const dropdown = document.getElementById('meuDropdown');
+            const buttonOriginal = dropdown.querySelector('.dropdown-btn');
+            const buttonSobreposto = document.querySelector('.botao-sobreposto.botao-1');
+    
+            // Alterna o menu ao clicar no botão
+            const toggleDropdown = (e) => {
+                e.stopPropagation(); // Evita que o clique feche o menu imediatamente ao "vazar" para o document
+                dropdown.classList.toggle('active');
+            };
+                
+            if (buttonOriginal) {
+                buttonOriginal.addEventListener('click', toggleDropdown);
+            }
+
+            if (buttonSobreposto) {
+                buttonSobreposto.addEventListener('click', toggleDropdown);
+            }
+
+            // Fecha o menu se o usuário clicar em qualquer outro lugar da tela
+            document.addEventListener('click', () => {
+                dropdown.classList.remove('active');
+            });
+        </script>
+
         <div class="container-fundo">
             <img src="Mapa B Country.jpeg" alt="Mapa do estacionamento do shopping Bourbon Country">
 
-            <button class="botao-sobreposto botao-1">Equipe 1</button>
-            <button class="botao-sobreposto botao-2">Equipe 2</button>
-            <button class="botao-sobreposto botao-3">Equipe 3</button>
+            <button class="botao-sobreposto botao-1" >Equipes</button>
         </div>
     </body>
 </html>
