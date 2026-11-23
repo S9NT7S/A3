@@ -1,334 +1,346 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Mapa Interativo - Bourbon Country</title>
-        <style>
-            * {
-                box-sizing: border-box;
-            }
+<head>
+    <meta charset="UTF-8">
+    <!-- CORREÇÃO 1: Sem isso o celular não entende a rotação -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Teste</title>
+    <style>
+        * { box-sizing: border-box; }
 
-            body {
-                margin: 0;
-                font-family: Arial, Helvetica, sans-serif;
-            }
+        body {
+            margin: 0;
+            padding: 0;
+            background: #000;
+            overflow-x: hidden;
+            /* Evita que a página "pule" ao girar */
+            width: 100%;
+        }
 
-            /* BARRA SUPERIOR COM OS DOIS DROPDOWNS */
-            .barra-topo {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                padding: 12px 20px;
-                position: relative;
-                z-index: 5;
-            }
+        /* CORREÇÃO 2: Barra dos 2 dropdowns - antes um estava com left:84% e estourava */
+        .topo-dropdowns {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            width: 100%;
+            max-width: 2048px;
+            margin: 0 auto;
+            padding: 8px;
+            background: #000;
+        }
 
+        .container-fundo {
+            position: relative;
+            width: 100%;
+            max-width: 2048px;
+            margin: 0 auto;
+            /* CORREÇÃO 3: Mantém a proporção do mapa em qualquer rotação */
+            line-height: 0;
+        }
+        .container-fundo img {
+            width: 100%;
+            height: auto;
+            display: block;
+            /* CORREÇÃO 4: Não deixa o celular embaçar a imagem ao girar */
+            image-rendering: auto;
+        }
+        .botao-sobreposto {
+            position: absolute;
+            padding: 0;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            color: black;
+            background: transparent;
+            z-index: 5;
+        }
+        /* ÁREA DAS EQUIPES DE CIMA - em cima da pista */
+        .botao-cima {
+            top: 36%;
+            left: 20%;
+            width: 16%;
+            height: 15%;
+        }
+        /* ÁREA DAS EQUIPES DE BAIXO - embaixo da pista */
+        .botao-baixo {
+            top: 58%;
+            left: 17%;
+            width: 16%;
+            height: 13%;
+        }
+
+        /* CORREÇÃO 5: Aviso "gire a tela" só aparece em pé, some quando deita */
+        .aviso-girar {
+            display: none;
+            text-align: center;
+            color: white;
+            background: #000;
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            padding: 10px;
+        }
+        @media (orientation: portrait) {
+            .aviso-girar { display: block; }
+        }
+        @media (orientation: landscape) {
+            .aviso-girar { display: none; }
+            /* No celular deitado, o mapa ocupa a tela toda */
             .container-fundo {
-                position: relative;
-                width: 100%;
-                max-width: 2048px;
-                margin: 0 auto;
+                max-width: 100vw;
             }
+        }
 
-            .container-fundo img {
-                width: 100%;
-                height: auto;
-                display: block;
-            }
+        .dropdown, .dropdown1 {
+            position: relative;
+            display: inline-block;
+            font-family: Arial, Helvetica, sans-serif;
+            left: auto;
+        }
+        .dropdown-btn, .dropdown-btn1 {
+            background-color: slateblue;
+            color: white;
+            padding: 12px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: 0.2s;
+            white-space: nowrap;
+        }
+        .dropdown-btn:hover, .dropdown-btn1:hover { background-color: orange; }
+        .arrow, .arrow1 {
+            border: solid white;
+            border-width: 0 2px 2px 0;
+            display: inline-block;
+            padding: 3px;
+            transform: rotate(45deg);
+            transition: transform 0.2s;
+        }
+        .dropdown.active .arrow, .dropdown1.active .arrow1 {
+            transform: rotate(-135deg);
+            margin-top: 4px;
+        }
+        .dropdown-menu, .dropdown-menu1 {
+            display: none;
+            position: absolute;
+            background-color: white;
+            min-width: 160px;
+            box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.15);
+            border-radius: 4px;
+            margin-top: 4px;
+            z-index: 20;
+            overflow: hidden;
+            /* CORREÇÃO 6: Menu não passa da tela no celular */
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+        /* Menu da direita abre para a esquerda, para não cortar */
+        .dropdown1 .dropdown-menu1 {
+            right: 0;
+            left: auto;
+        }
+        .dropdown-menu a, .dropdown-menu1 a {
+            color: #333;
+            padding: 14px 20px;
+            text-decoration: none;
+            display: block;
+            transition: 0.2s;
+        }
+        .dropdown-menu a:hover, .dropdown-menu1 a:hover { background-color: #f1f1f1; }
+        .dropdown.active .dropdown-menu, .dropdown1.active .dropdown-menu1 { display: block; }
 
-            /* BOTÃO INVISÍVEL PROPORCIONAL AO MAPA */
-            .botao-sobreposto {
-                position: absolute;
-                border: none;
-                border-radius: 5px;
-                cursor: pointer;
-                background-color: transparent;
-                /* background-color: red; */
-                /* opacity: 50%; */
-            }
+        .modal-backdrop {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100dvh;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 10;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-container {
+            background-color: white;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 1200px;
+            height: 85vh;
+            max-height: 850px;
+            overflow: hidden;
+            display: flex;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+            position: relative;
+            font-family: Arial, sans-serif;
+        }
+        .modal-fechar {
+            position: absolute;
+            top: 3%;
+            right: 5%;
+            font-size: 60px;
+            line-height: 1;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #ff0000;
+            z-index: 2;
+        }
+        .modal-fechar:hover { color: #000; }
+        .modal-backdrop.mostrar-modal { display: flex; }
+        .imagem-modal {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
+            margin: 0;
+        }
 
-            /* Ajuste os valores em % para alinhar exatamente sobre a área desejada */
-            .botao-1 {
-                top: 37%;
-                left: 20%;
-                width: 15%;
-                height: 13%;
-            }
+        /* Celular pequeno: botões menores */
+        @media (max-width: 600px) {
+            .dropdown-btn, .dropdown-btn1 { padding: 10px 14px; font-size: 14px; }
+            .modal-fechar { font-size: 48px; }
+        }
+    </style>
+</head>
+<body>
 
-            /* DROPDOWNS */
-            .dropdown,
-            .dropdown1 {
-                position: relative;
-                display: inline-block;
-            }
-
-            .dropdown-btn,
-            .dropdown-btn1 {
-                background-color: slateblue;
-                color: white;
-                padding: 12px 20px;
-                font-size: 16px;
-                border: none;
-                border-radius: 4px;
-                cursor: pointer;
-                display: flex;
-                align-items: center;
-                gap: 8px;
-                transition: 0.2s;
-            }
-
-            .dropdown-btn:hover,
-            .dropdown-btn1:hover {
-                background-color: orange;
-            }
-
-            .arrow,
-            .arrow1 {
-                border: solid white;
-                border-width: 0 2px 2px 0;
-                display: inline-block;
-                padding: 3px;
-                transform: rotate(45deg);
-                transition: transform 0.2s;
-            }
-
-            .dropdown.active .arrow,
-            .dropdown1.active .arrow1 {
-                transform: rotate(-135deg);
-                margin-top: 4px;
-            }
-
-            .dropdown-menu,
-            .dropdown-menu1 {
-                display: none;
-                position: absolute;
-                top: 100%;
-                background-color: white;
-                min-width: 180px;
-                max-height: 70vh;
-                overflow-y: auto;
-                box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.15);
-                border-radius: 4px;
-                margin-top: 4px;
-                z-index: 6;
-            }
-
-            /* Garante que o menu da direita abra para dentro da tela */
-            .dropdown-menu1 {
-                right: 0;
-            }
-
-            .dropdown-menu a,
-            .dropdown-menu1 a {
-                color: #333;
-                padding: 14px 20px;
-                text-decoration: none;
-                display: block;
-                transition: 0.2s;
-            }
-
-            .dropdown-menu a:hover,
-            .dropdown-menu1 a:hover {
-                background-color: #f1f1f1;
-            }
-
-            .dropdown.active .dropdown-menu,
-            .dropdown1.active .dropdown-menu1 {
-                display: block;
-            }
-
-            /* ==================== ESTILOS DA MODAL ==================== */
-            .modal-backdrop {
-                display: none;
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100vw;
-                height: 100vh;
-                background-color: rgba(0, 0, 0, 0.6);
-                z-index: 10;
-                justify-content: center;
-                align-items: center;
-                padding: 20px;
-            }
-
-            .modal-backdrop.mostrar-modal {
-                display: flex;
-            }
-
-            .modal-container {
-                background-color: white;
-                border-radius: 8px;
-                width: 90%;
-                max-width: 1200px;
-                max-height: 90vh;
-                overflow: hidden;
-                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
-                position: relative;
-            }
-
-            .modal-fechar {
-                position: absolute;
-                top: 10px;
-                right: 16px;
-                font-size: 48px;
-                line-height: 1;
-                background: rgba(255, 255, 255, 0.8);
-                border: none;
-                border-radius: 50%;
-                width: 52px;
-                height: 52px;
-                cursor: pointer;
-                color: #ff0000;
-            }
-
-            .modal-fechar:hover {
-                color: #000;
-            }
-
-            .imagem-modal {
-                width: 100%;
-                max-height: 85vh;
-                object-fit: contain;
-                display: block;
-                margin: 0 auto;
-            }
-        </style>
-    </head>
-    <body>
-        <div class="barra-topo">
-            <!-- DROPDOWN DA ESQUERDA -->
-            <div class="dropdown" id="meuDropdown1">
-                <button class="dropdown-btn" type="button">
-                    Equipes <i class="arrow"></i>
-                </button>
-                <div class="dropdown-menu">
-                    <a href="#teste" data-equipe="Equipe 1" data-src="Equipe01RealCopia.jpg">Equipe 1</a>
-                    <a href="#teste" data-equipe="Equipe 2" data-src="Equipe01RealCopia.jpg">Equipe 2</a>
-                    <a href="#teste" data-equipe="Equipe 3" data-src="Equipe01RealCopia.jpg">Equipe 3</a>
-                    <a href="#teste" data-equipe="Equipe 4" data-src="Equipe01RealCopia.jpg">Equipe 4</a>
-                    <a href="#teste" data-equipe="Equipe 5" data-src="Equipe01RealCopia.jpg">Equipe 5</a>
-                    <a href="#teste" data-equipe="Equipe 6" data-src="Equipe01RealCopia.jpg">Equipe 6</a>
-                    <a href="#teste" data-equipe="Equipe 7" data-src="Equipe01RealCopia.jpg">Equipe 7</a>
-                    <a href="#teste" data-equipe="Equipe 8" data-src="Equipe01RealCopia.jpg">Equipe 8</a>
-                    <a href="#teste" data-equipe="Equipe 9" data-src="Equipe01RealCopia.jpg">Equipe 9</a>
-                    <a href="#teste" data-equipe="Equipe 10" data-src="Equipe01RealCopia.jpg">Equipe 10</a>
-                    <a href="#teste" data-equipe="Equipe 11" data-src="Equipe01RealCopia.jpg">Equipe 11</a>
-                </div>
-            </div>
-
-            <!-- DROPDOWN DA DIREITA -->
-            <div class="dropdown1" id="meuDropdown2">
-                <button class="dropdown-btn1" type="button">
-                    Equipes <i class="arrow1"></i>
-                </button>
-                <div class="dropdown-menu1">
-                    <a href="#teste" data-equipe="Equipe 12" data-src="Equipe02.jpeg">Equipe 12</a>
-                    <a href="#teste" data-equipe="Equipe 13" data-src="Equipe02.jpeg">Equipe 13</a>
-                    <a href="#teste" data-equipe="Equipe 14" data-src="Equipe02.jpeg">Equipe 14</a>
-                    <a href="#teste" data-equipe="Equipe 15" data-src="Equipe02.jpeg">Equipe 15</a>
-                    <a href="#teste" data-equipe="Equipe 16" data-src="Equipe02.jpeg">Equipe 16</a>
-                    <a href="#teste" data-equipe="Equipe 17" data-src="Equipe02.jpeg">Equipe 17</a>
-                    <a href="#teste" data-equipe="Equipe 18" data-src="Equipe02.jpeg">Equipe 18</a>
-                    <a href="#teste" data-equipe="Equipe 19" data-src="Equipe02.jpeg">Equipe 19</a>
-                    <a href="#teste" data-equipe="Equipe 20" data-src="Equipe02.jpeg">Equipe 20</a>
-                    <a href="#teste" data-equipe="Equipe 21" data-src="Equipe02.jpeg">Equipe 21</a>
-                    <a href="#teste" data-equipe="Equipe 22" data-src="Equipe02.jpeg">Equipe 22</a>
-                </div>
+    <!-- TOPO COM OS 2 DROPDOWNS -->
+    <div class="topo-dropdowns">
+        <div class="dropdown" id="meuDropdown1">
+            <button class="dropdown-btn">Equipes <i class="arrow"></i></button>
+            <div class="dropdown-menu">
+                <a href="#teste" data-equipe="Equipe 1">Equipe 1</a>
+                <a href="#teste" data-equipe="Equipe 2">Equipe 2</a>
+                <a href="#teste" data-equipe="Equipe 3">Equipe 3</a>
+                <a href="#teste" data-equipe="Equipe 4">Equipe 4</a>
+                <a href="#teste" data-equipe="Equipe 5">Equipe 5</a>
+                <a href="#teste" data-equipe="Equipe 6">Equipe 6</a>
+                <a href="#teste" data-equipe="Equipe 7">Equipe 7</a>
+                <a href="#teste" data-equipe="Equipe 8">Equipe 8</a>
+                <a href="#teste" data-equipe="Equipe 9">Equipe 9</a>
+                <a href="#teste" data-equipe="Equipe 10">Equipe 10</a>
+                <a href="#teste" data-equipe="Equipe 11">Equipe 11</a>
             </div>
         </div>
 
-        <!-- MAPA DOS ESTACIONAMENTOS -->
-        <div class="container-fundo">
-            <img src="Mapa B Country Real.jpeg" alt="Mapa do estacionamento do shopping Bourbon Country">
-            <button class="botao-sobreposto botao-1" type="button" aria-label="Abrir equipes"></button>
-        </div>
-
-        <!-- ESTRUTURA DA JANELA MODAL -->
-        <div class="modal-backdrop" id="minhaModal">
-            <div class="modal-container">
-                <button class="modal-fechar" id="fecharModalBtn" type="button">&times;</button>
-                <img src="Equipe01RealCopia.jpg" alt="Informações da equipe" class="imagem-modal" id="imagem-modal">
+        <div class="dropdown1" id="meuDropdown2">
+            <button class="dropdown-btn1">Equipes <i class="arrow1"></i></button>
+            <div class="dropdown-menu1">
+                <a href="#teste" data-equipe="Equipe 12">Equipe 12</a>
+                <a href="#teste" data-equipe="Equipe 13">Equipe 13</a>
+                <a href="#teste" data-equipe="Equipe 14">Equipe 14</a>
+                <a href="#teste" data-equipe="Equipe 15">Equipe 15</a>
+                <a href="#teste" data-equipe="Equipe 16">Equipe 16</a>
+                <a href="#teste" data-equipe="Equipe 17">Equipe 17</a>
+                <a href="#teste" data-equipe="Equipe 18">Equipe 18</a>
+                <a href="#teste" data-equipe="Equipe 19">Equipe 19</a>
+                <a href="#teste" data-equipe="Equipe 20">Equipe 20</a>
+                <a href="#teste" data-equipe="Equipe 21">Equipe 21</a>
+                <a href="#teste" data-equipe="Equipe 22">Equipe 22</a>
             </div>
         </div>
+    </div>
 
-        <script>
-            const dropdown1 = document.getElementById('meuDropdown1');
-            const dropdown2 = document.getElementById('meuDropdown2');
+    <div class="aviso-girar">Gire a tela do celular para visualizar melhor o mapa</div>
 
-            const buttonOriginal1 = dropdown1.querySelector('.dropdown-btn');
-            const buttonOriginal2 = dropdown2.querySelector('.dropdown-btn1');
-            const buttonSobreposto = document.querySelector('.botao-sobreposto.botao-1');
+    <!-- MAPA -->
+    <div class="container-fundo">
+        <img src="Mapa B Country Real.jpeg" alt="Mapa do estacionamento do shopping Bourbon Country">
+        <button class="botao-sobreposto botao-cima" aria-label="Abrir menu equipes de cima"></button>
+        <button class="botao-sobreposto botao-baixo" aria-label="Abrir menu equipes de baixo"></button>
+    </div>
 
-            const linksEquipes1 = dropdown1.querySelectorAll('.dropdown-menu a');
-            const linksEquipes2 = dropdown2.querySelectorAll('.dropdown-menu1 a');
+    <!-- MODAL -->
+    <div class="modal-backdrop" id="minhaModal">
+        <div class="modal-container">
+            <button class="modal-fechar" id="fecharModalBtn">&times;</button>
+            <img src="Equipe01RealCopia.jpg" alt="Info da equipe 01" class="imagem-modal" id="imagem-modal">
+        </div>
+    </div>
 
-            const toggleAmbosDropdowns = (e) => {
-                e.stopPropagation();
-                const estaAtivo = dropdown1.classList.contains('active');
+    <script>
+        const dropdown1 = document.getElementById('meuDropdown1');
+        const dropdown2 = document.getElementById('meuDropdown2');
+        const buttonOriginal1 = dropdown1.querySelector('.dropdown-btn');
+        const buttonOriginal2 = dropdown2.querySelector('.dropdown-btn1');
+        const botoesSobrepostos = document.querySelectorAll('.botao-sobreposto');
+        const linksEquipes1 = dropdown1.querySelectorAll('.dropdown-menu a');
+        const linksEquipes2 = dropdown2.querySelectorAll('.dropdown-menu1 a');
 
-                dropdown1.classList.toggle('active', !estaAtivo);
-                dropdown2.classList.toggle('active', !estaAtivo);
-            };
+        const toggleAmbosDropdowns = (e) => {
+            e.stopPropagation();
+            const estaAtivo = dropdown1.classList.contains('active');
+            if (estaAtivo) {
+                dropdown1.classList.remove('active');
+                dropdown2.classList.remove('active');
+            } else {
+                dropdown1.classList.add('active');
+                dropdown2.classList.add('active');
+            }
+        };
 
-            if (buttonOriginal1) buttonOriginal1.addEventListener('click', toggleAmbosDropdowns);
-            if (buttonOriginal2) buttonOriginal2.addEventListener('click', toggleAmbosDropdowns);
-            if (buttonSobreposto) buttonSobreposto.addEventListener('click', toggleAmbosDropdowns);
+        if (buttonOriginal1) buttonOriginal1.addEventListener('click', toggleAmbosDropdowns);
+        if (buttonOriginal2) buttonOriginal2.addEventListener('click', toggleAmbosDropdowns);
+        botoesSobrepostos.forEach(btn => btn.addEventListener('click', toggleAmbosDropdowns));
 
-            document.addEventListener('click', (e) => {
-                const clicouFora1 = !dropdown1.contains(e.target);
-                const clicouFora2 = !dropdown2.contains(e.target);
-                const clicouBotaoSobreposto = buttonSobreposto && buttonSobreposto.contains(e.target);
+        document.addEventListener('click', (e) => {
+            const clicouFora1 = !dropdown1.contains(e.target);
+            const clicouFora2 = !dropdown2.contains(e.target);
+            const clicouBotaoSobreposto = Array.from(botoesSobrepostos).some(btn => btn.contains(e.target));
+            if (clicouFora1 && clicouFora2 && !clicouBotaoSobreposto) {
+                dropdown1.classList.remove('active');
+                dropdown2.classList.remove('active');
+            }
+        });
 
-                if (clicouFora1 && clicouFora2 && !clicouBotaoSobreposto) {
+        const modal = document.getElementById('minhaModal');
+        const imagemModal = document.getElementById('imagem-modal');
+        const fecharModalBtn = document.getElementById('fecharModalBtn');
+
+        const configurarLinksModal = (links) => {
+            links.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const nomeEquipe = link.getAttribute('data-equipe');
+                    const numero = nomeEquipe.replace(/\D/g, '');
+                    const numeroFormatado = String(numero).padStart(2, '0');
+                    imagemModal.src = `Equipe${numeroFormatado}RealCopia.jpg`;
+                    imagemModal.alt = `Info da equipe ${numero}`;
+                    modal.classList.add('mostrar-modal');
                     dropdown1.classList.remove('active');
                     dropdown2.classList.remove('active');
-                }
-            });
-
-            // Elementos da Modal
-            const modal = document.getElementById('minhaModal');
-            const imagemModal = document.getElementById('imagem-modal');
-            const fecharModalBtn = document.getElementById('fecharModalBtn');
-
-            const configurarLinksModal = (links) => {
-                links.forEach(link => {
-                    link.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        const nomeEquipe = link.getAttribute('data-equipe') || 'Equipe';
-                        const imagemSrc = link.getAttribute('data-src') || 'Equipe01RealCopia.jpg';
-
-                        imagemModal.src = imagemSrc;
-                        imagemModal.alt = `Informações da ${nomeEquipe}`;
-                        modal.classList.add('mostrar-modal');
-
-                        dropdown1.classList.remove('active');
-                        dropdown2.classList.remove('active');
-                    });
                 });
-            };
-
-            configurarLinksModal(linksEquipes1);
-            configurarLinksModal(linksEquipes2);
-
-            const fecharModal = () => {
-                modal.classList.remove('mostrar-modal');
-            };
-
-            fecharModalBtn.addEventListener('click', fecharModal);
-
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) {
-                    fecharModal();
-                }
             });
+        };
 
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape' && modal.classList.contains('mostrar-modal')) {
-                    fecharModal();
-                }
-            });
-        </script>
-    </body>
+        configurarLinksModal(linksEquipes1);
+        configurarLinksModal(linksEquipes2);
+
+        const fecharModal = () => modal.classList.remove('mostrar-modal');
+        fecharModalBtn.addEventListener('click', fecharModal);
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) fecharModal();
+        });
+
+        // CORREÇÃO 7: Força o navegador a recalcular o layout ao girar
+        const corrigirAoGirar = () => {
+            setTimeout(() => {
+                window.dispatchEvent(new Event('resize'));
+                document.body.style.display = 'none';
+                document.body.offsetHeight;
+                document.body.style.display = '';
+            }, 150);
+        };
+        window.addEventListener('orientationchange', corrigirAoGirar);
+        window.addEventListener('resize', () => {
+            // Fecha os menus ao girar para não ficarem tortos
+            dropdown1.classList.remove('active');
+            dropdown2.classList.remove('active');
+        });
+    </script>
+</body>
 </html>
